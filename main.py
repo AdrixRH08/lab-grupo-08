@@ -73,6 +73,7 @@ def demostrar_valor_y_referencia():
 
 def procesar_datos():
     user = entry_user.get()
+    curso = entry_curso.get()
 
     if not validar_texto_obligatorio(user, "Nombre"):
         return
