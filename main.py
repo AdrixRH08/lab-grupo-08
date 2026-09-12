@@ -15,6 +15,11 @@ def determinar_estado(promedio):
     else:
         return "INVÁLIDO"
 
+def validar_texto_obligatorio(texto, nombre_campo): 
+    if texto is None or texto.strip() == "":
+        messagebox.showerror("Error", f"El campo '{nombre_campo}' no puede estar vacío.")
+        return False
+    return True
 
 def construir_reporte(user, dni, curso, n1, n2, n3, n4, promedio, estado):
     return (
@@ -68,6 +73,11 @@ def demostrar_valor_y_referencia():
 
 def procesar_datos():
     user = entry_user.get()
+
+    if not validar_texto_obligatorio(user, "Nombre"):
+        return
+    if not validar_texto_obligatorio(curso, "Curso"):
+        return
 
     try:
         dni = int(entry_dni.get())
