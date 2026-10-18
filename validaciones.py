@@ -1,3 +1,14 @@
+import unicodedata
+
+
+def normalizar_texto(texto):
+    """Minúsculas, sin tildes y sin espacios repetidos (para comparar nombres y cursos)."""
+    sin_tildes = "".join(
+        c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn"
+    )
+    return " ".join(sin_tildes.lower().split())
+
+
 def validar_texto_obligatorio(texto):
     return texto is not None and texto.strip() != ""
 
@@ -24,7 +35,7 @@ def curso_ya_registrado(lista, dni, curso, ignorar=None):
     for i, registro in enumerate(lista):
         if i == ignorar:
             continue
-        if registro["dni"] == dni and registro["curso"].strip().lower() == curso.strip().lower():
+        if registro["dni"] == dni and normalizar_texto(registro["curso"]) == normalizar_texto(curso):
             return True
     return False
 
@@ -33,5 +44,13 @@ def nombre_coincide(lista, dni, nombre):
     """True si el DNI es nuevo o si ya está registrado con ese mismo nombre."""
     for registro in lista:
         if registro["dni"] == dni:
-            return registro["user"].strip().lower() == nombre.strip().lower()
+            return normalizar_texto(registro["user"]) == normalizar_texto(nombre)
     return True
+
+
+def nombre_usado_por_otro_dni(lista, dni, nombre):
+    """True si ese nombre ya pertenece a un alumno con un DNI distinto."""
+    for registro in lista:
+        if registro["dni"] != dni and normalizar_texto(registro["user"]) == normalizar_texto(nombre):
+            return True
+    return False

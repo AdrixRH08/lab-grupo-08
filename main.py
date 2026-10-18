@@ -4,7 +4,7 @@ from tkinter import ttk, messagebox
 from logica import crear_registro
 from validaciones import (
     validar_texto_obligatorio, validar_nota, validar_dni, convertir_notas,
-    curso_ya_registrado, nombre_coincide,
+    curso_ya_registrado, nombre_coincide, nombre_usado_por_otro_dni,
 )
 from reportes import construir_reporte, construir_reporte_estadisticas
 from consultas import buscar_por_dni, promedio_general_alumno, calcular_estadisticas
@@ -94,6 +94,9 @@ def registrar_alumno():
         return
     if not nombre_coincide(lista_alumnos, dni, user):
         messagebox.showerror("Error", "Ese DNI ya está registrado con otro nombre.")
+        return
+    if nombre_usado_por_otro_dni(lista_alumnos, dni, user):
+        messagebox.showerror("Error", "Ese nombre ya está registrado con otro DNI.")
         return
     if curso_ya_registrado(lista_alumnos, dni, curso):
         messagebox.showerror(
@@ -186,6 +189,9 @@ def editar_seleccionado():
             return
         notas = validar_notas_ingresadas([e.get() for e in e_notas], parent=dialogo)
         if notas is None:
+            return
+        if nombre_usado_por_otro_dni(lista_alumnos, r["dni"], user):
+            messagebox.showerror("Error", "Ese nombre ya pertenece a otro alumno (otro DNI).", parent=dialogo)
             return
         if curso_ya_registrado(lista_alumnos, r["dni"], curso, ignorar=indice):
             messagebox.showerror("Error", "Ese alumno ya tiene registrado ese curso.", parent=dialogo)

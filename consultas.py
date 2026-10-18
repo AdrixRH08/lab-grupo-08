@@ -1,3 +1,6 @@
+from validaciones import normalizar_texto
+
+
 def buscar_por_dni(lista, dni):
     """Retorna los índices de todos los registros (cursos) de ese DNI."""
     return [i for i, registro in enumerate(lista) if registro["dni"] == dni]
@@ -22,7 +25,7 @@ def calcular_estadisticas(lista):
 
     por_curso = {}
     for r in lista:
-        clave = r["curso"].strip().lower()
+        clave = normalizar_texto(r["curso"])
         if clave not in por_curso:
             por_curso[clave] = {"nombre": r["curso"].strip(), "promedios": []}
         por_curso[clave]["promedios"].append(r["promedio"])
