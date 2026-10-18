@@ -6,6 +6,22 @@ def buscar_por_dni(lista, dni):
     return [i for i, registro in enumerate(lista) if registro["dni"] == dni]
 
 
+def unificar_nombre_curso(lista, curso, ignorar=None):
+    """Si el curso ya existe (sin importar mayúsculas, tildes o espacios), retorna su escritura original."""
+    for i, registro in enumerate(lista):
+        if i != ignorar and normalizar_texto(registro["curso"]) == normalizar_texto(curso):
+            return registro["curso"]
+    return " ".join(curso.split())
+
+
+def unificar_nombre_alumno(lista, dni, nombre):
+    """Si el DNI ya tiene registros, retorna el nombre con el que se registró por primera vez."""
+    for registro in lista:
+        if registro["dni"] == dni:
+            return registro["user"]
+    return " ".join(nombre.split())
+
+
 def promedio_general_alumno(lista, dni):
     """Promedio de los promedios de todos los cursos del alumno. None si no existe."""
     indices = buscar_por_dni(lista, dni)

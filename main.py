@@ -7,7 +7,10 @@ from validaciones import (
     curso_ya_registrado, nombre_coincide, nombre_usado_por_otro_dni,
 )
 from reportes import construir_reporte, construir_reporte_estadisticas
-from consultas import buscar_por_dni, promedio_general_alumno, calcular_estadisticas
+from consultas import (
+    buscar_por_dni, promedio_general_alumno, calcular_estadisticas,
+    unificar_nombre_curso, unificar_nombre_alumno,
+)
 from almacenamiento import guardar_alumnos, cargar_alumnos
 
 lista_alumnos = cargar_alumnos()
@@ -105,6 +108,9 @@ def registrar_alumno():
         )
         return
 
+    curso = unificar_nombre_curso(lista_alumnos, curso)
+    user = unificar_nombre_alumno(lista_alumnos, dni, user)
+
     registro = crear_registro(dni, user, curso, notas)
     lista_alumnos.append(registro)
     guardar_alumnos(lista_alumnos)
@@ -197,6 +203,8 @@ def editar_seleccionado():
             messagebox.showerror("Error", "Ese alumno ya tiene registrado ese curso.", parent=dialogo)
             return
 
+        curso = unificar_nombre_curso(lista_alumnos, curso, ignorar=indice)
+        user = " ".join(user.split())
         lista_alumnos[indice] = crear_registro(r["dni"], user, curso, notas)
         for otro in lista_alumnos:
             if otro["dni"] == r["dni"]:
