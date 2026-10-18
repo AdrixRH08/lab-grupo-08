@@ -2,36 +2,39 @@ import csv
 import os
 
 ARCHIVO_ALUMNOS = "alumnos.csv"
+ENCABEZADOS = ["dni", "user", "curso", "n1", "n2", "n3", "n4", "promedio", "estado"]
+
 
 def guardar_alumnos(lista_alumnos):
-    """Sin retorno: escribe TODA la lista de alumnos en el archivo CSV."""
+    """Sin retorno: escribe TODA la lista de registros en el archivo CSV."""
     with open(ARCHIVO_ALUMNOS, mode="w", newline="", encoding="utf-8") as f:
         escritor = csv.writer(f)
-        escritor.writerow(["dni", "user", "curso", "n1", "n2", "n3", "n4", "promedio", "estado"])
-        for alumno in lista_alumnos:
+        escritor.writerow(ENCABEZADOS)
+        for r in lista_alumnos:
             escritor.writerow([
-                alumno["dni"], alumno["user"], alumno["curso"],
-                alumno["notas"][0], alumno["notas"][1], alumno["notas"][2], alumno["notas"][3],
-                alumno["promedio"], alumno["estado"]
+                r["dni"], r["user"], r["curso"],
+                r["notas"][0], r["notas"][1], r["notas"][2], r["notas"][3],
+                r["promedio"], r["estado"],
             ])
 
 
 def cargar_alumnos():
-    """Con retorno: lee el archivo (si existe) y devuelve la lista de alumnos."""
+    """Con retorno: lee el CSV (si existe) y devuelve la lista de registros."""
     lista = []
     if not os.path.exists(ARCHIVO_ALUMNOS):
-        return lista  # todavía no hay archivo, devuelve lista vacía
+        return lista
 
     with open(ARCHIVO_ALUMNOS, mode="r", newline="", encoding="utf-8") as f:
-        lector = csv.DictReader(f)
-        for fila in lector:
-            alumno = {
-                "dni": int(fila["dni"]),
-                "user": fila["user"],
-                "curso": fila["curso"],
-                "notas": [int(fila["n1"]), int(fila["n2"]), int(fila["n3"]), int(fila["n4"])],
-                "promedio": float(fila["promedio"]),
-                "estado": fila["estado"],
-            }
-            lista.append(alumno)
+        for fila in csv.DictReader(f):
+            try:
+                lista.append({
+                    "dni": fila["dni"],
+                    "user": fila["user"],
+                    "curso": fila["curso"],
+                    "notas": [int(fila["n1"]), int(fila["n2"]), int(fila["n3"]), int(fila["n4"])],
+                    "promedio": float(fila["promedio"]),
+                    "estado": fila["estado"],
+                })
+            except (KeyError, ValueError):
+                continue
     return lista
