@@ -1,4 +1,17 @@
+"""Funciones puras de validación y normalización. Si el dato es inválido lanzan ErrorValidacion."""
 import unicodedata
+
+from logica import CANTIDAD_NOTAS, NOTA_MAX, NOTA_MIN
+
+DNI_LONGITUD = 8
+
+
+class ErrorValidacion(ValueError):
+    """Dato inválido o regla incumplida. El mensaje se puede mostrar tal cual al usuario."""
+
+
+class ErrorCursoDuplicado(ErrorValidacion):
+    """Caso particular: el alumno ya tiene registrado ese curso (herencia de excepciones)."""
 
 
 def normalizar_texto(texto):
@@ -9,48 +22,29 @@ def normalizar_texto(texto):
     return " ".join(sin_tildes.lower().split())
 
 
-def validar_texto_obligatorio(texto):
-    return texto is not None and texto.strip() != ""
+def validar_texto_obligatorio(texto, campo):
+    """Retorna el texto sin espacios repetidos; lanza ErrorValidacion si está vacío."""
+    if texto is None or not texto.strip():
+        raise ErrorValidacion(f"El campo '{campo}' no puede estar vacío.")
+    return " ".join(texto.split())
 
 
-def validar_nota(nota):
-    return 0 <= nota <= 20
+def validar_dni(texto):
+    """El DNI debe tener exactamente 8 dígitos numéricos. Retorna el DNI limpio."""
+    dni = (texto or "").strip()
+    if not (dni.isascii() and dni.isdigit() and len(dni) == DNI_LONGITUD):
+        raise ErrorValidacion(f"El DNI debe tener exactamente {DNI_LONGITUD} dígitos numéricos.")
+    return dni
 
 
-def validar_dni(dni):
-    """El DNI debe tener exactamente 8 dígitos numéricos."""
-    return dni.isascii() and dni.isdigit() and len(dni) == 8
-
-
-def convertir_notas(textos):
-    """Convierte la lista de textos a enteros. Retorna None si alguno no es entero."""
+def validar_notas(valores):
+    """Convierte las notas (texto o enteros) y verifica cantidad y rango. Retorna una tupla de enteros."""
     try:
-        return [int(texto) for texto in textos]
-    except ValueError:
-        return None
-
-
-def curso_ya_registrado(lista, dni, curso, ignorar=None):
-    """True si ese alumno ya tiene registrado ese curso (se puede ignorar un índice al editar)."""
-    for i, registro in enumerate(lista):
-        if i == ignorar:
-            continue
-        if registro["dni"] == dni and normalizar_texto(registro["curso"]) == normalizar_texto(curso):
-            return True
-    return False
-
-
-def nombre_coincide(lista, dni, nombre):
-    """True si el DNI es nuevo o si ya está registrado con ese mismo nombre."""
-    for registro in lista:
-        if registro["dni"] == dni:
-            return normalizar_texto(registro["user"]) == normalizar_texto(nombre)
-    return True
-
-
-def nombre_usado_por_otro_dni(lista, dni, nombre):
-    """True si ese nombre ya pertenece a un alumno con un DNI distinto."""
-    for registro in lista:
-        if registro["dni"] != dni and normalizar_texto(registro["user"]) == normalizar_texto(nombre):
-            return True
-    return False
+        notas = tuple(int(valor) for valor in valores)
+    except (TypeError, ValueError):
+        raise ErrorValidacion("Las notas deben ser números enteros.") from None
+    if len(notas) != CANTIDAD_NOTAS:
+        raise ErrorValidacion(f"Se requieren exactamente {CANTIDAD_NOTAS} notas.")
+    if not all(NOTA_MIN <= nota <= NOTA_MAX for nota in notas):
+        raise ErrorValidacion(f"Las notas deben estar entre {NOTA_MIN} y {NOTA_MAX}.")
+    return notas

@@ -1,24 +1,23 @@
-def calcular_promedio(n1, n2, n3, n4):
-    return (n1 + n2 + n3 + n4) / 4
+"""Reglas de negocio puras (sin interfaz, sin archivos): constantes, promedio y estado."""
+
+CANTIDAD_NOTAS = 4
+NOTA_MIN = 0
+NOTA_MAX = 20
+NOTA_APROBATORIA = 11
+
+APROBADO = "APROBADO"
+DESAPROBADO = "DESAPROBADO"
+INVALIDO = "INVÁLIDO"
+
+
+def calcular_promedio(notas):
+    return sum(notas) / len(notas)
 
 
 def determinar_estado(promedio):
-    if promedio < 11:
-        return "DESAPROBADO"
-    elif promedio <= 20:
-        return "APROBADO"
-    else:
-        return "INVÁLIDO"
-
-
-def crear_registro(dni, user, curso, notas):
-    """Arma el registro (alumno + curso) con su promedio y estado ya calculados."""
-    promedio = calcular_promedio(notas[0], notas[1], notas[2], notas[3])
-    return {
-        "dni": dni,
-        "user": user,
-        "curso": curso,
-        "notas": notas,
-        "promedio": promedio,
-        "estado": determinar_estado(promedio),
-    }
+    """DESAPROBADO por debajo de 11, APROBADO hasta 20 e INVÁLIDO si se pasa de 20."""
+    if promedio < NOTA_APROBATORIA:
+        return DESAPROBADO
+    if promedio <= NOTA_MAX:
+        return APROBADO
+    return INVALIDO

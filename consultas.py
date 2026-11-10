@@ -1,63 +1,68 @@
-from validaciones import normalizar_texto
+"""Consultas de solo lectura sobre los registros: estadísticas del salón."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Iterable
+
+from logica import APROBADO, DESAPROBADO
+from modelos import Registro
 
 
-def buscar_por_dni(lista, dni):
-    """Retorna los índices de todos los registros (cursos) de ese DNI."""
-    return [i for i, registro in enumerate(lista) if registro["dni"] == dni]
+@dataclass(frozen=True)
+class Estadisticas:
+    total_registros: int
+    total_alumnos: int
+    promedio_salon: float
+    aprobados: int
+    desaprobados: int
+    mejor: Registro
+    peor: Registro
+    promedios_curso: dict[str, float]
 
 
-def unificar_nombre_curso(lista, curso, ignorar=None):
-    """Si el curso ya existe (sin importar mayúsculas, tildes o espacios), retorna su escritura original."""
-    for i, registro in enumerate(lista):
-        if i != ignorar and normalizar_texto(registro["curso"]) == normalizar_texto(curso):
-            return registro["curso"]
-    return " ".join(curso.split())
+def calcular_estadisticas(registros: Iterable[Registro]) -> Estadisticas | None:
+    """Calcula todo en UNA sola pasada. Retorna None si no hay registros."""
+    total = 0
+    suma = 0.0
+    aprobados = desaprobados = 0
+    dnis = set()
+    mejor = peor = None
+    por_curso = {}  # curso_clave -> [nombre, suma de promedios, cantidad]
 
+    for r in registros:
+        total += 1
+        suma += r.promedio
+        dnis.add(r.alumno.dni)
+        if r.estado == APROBADO:
+            aprobados += 1
+        elif r.estado == DESAPROBADO:
+            desaprobados += 1
 
-def unificar_nombre_alumno(lista, dni, nombre):
-    """Si el DNI ya tiene registros, retorna el nombre con el que se registró por primera vez."""
-    for registro in lista:
-        if registro["dni"] == dni:
-            return registro["user"]
-    return " ".join(nombre.split())
+        if mejor is None:
+            mejor = peor = r
+        else:
+            if r.promedio > mejor.promedio:
+                mejor = r
+            if r.promedio < peor.promedio:
+                peor = r
 
+        datos = por_curso.get(r.curso_clave)
+        if datos is None:
+            por_curso[r.curso_clave] = [r.curso, r.promedio, 1]
+        else:
+            datos[1] += r.promedio
+            datos[2] += 1
 
-def promedio_general_alumno(lista, dni):
-    """Promedio de los promedios de todos los cursos del alumno. None si no existe."""
-    indices = buscar_por_dni(lista, dni)
-    if not indices:
+    if total == 0:
         return None
-    return sum(lista[i]["promedio"] for i in indices) / len(indices)
 
-
-def calcular_estadisticas(lista):
-    """Retorna un diccionario con las estadísticas del salón. None si no hay registros."""
-    if not lista:
-        return None
-
-    total = len(lista)
-    aprobados = sum(1 for r in lista if r["estado"] == "APROBADO")
-    desaprobados = sum(1 for r in lista if r["estado"] == "DESAPROBADO")
-
-    por_curso = {}
-    for r in lista:
-        clave = normalizar_texto(r["curso"])
-        if clave not in por_curso:
-            por_curso[clave] = {"nombre": r["curso"].strip(), "promedios": []}
-        por_curso[clave]["promedios"].append(r["promedio"])
-
-    promedios_curso = {
-        datos["nombre"]: sum(datos["promedios"]) / len(datos["promedios"])
-        for datos in por_curso.values()
-    }
-
-    return {
-        "total_registros": total,
-        "total_alumnos": len({r["dni"] for r in lista}),
-        "promedio_salon": sum(r["promedio"] for r in lista) / total,
-        "aprobados": aprobados,
-        "desaprobados": desaprobados,
-        "mejor": max(lista, key=lambda r: r["promedio"]),
-        "peor": min(lista, key=lambda r: r["promedio"]),
-        "promedios_curso": promedios_curso,
-    }
+    return Estadisticas(
+        total_registros=total,
+        total_alumnos=len(dnis),
+        promedio_salon=suma / total,
+        aprobados=aprobados,
+        desaprobados=desaprobados,
+        mejor=mejor,
+        peor=peor,
+        promedios_curso={nombre: s / n for nombre, s, n in por_curso.values()},
+    )
